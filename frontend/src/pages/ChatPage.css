@@ -1,0 +1,152 @@
+.chat-page {
+  max-width: 1000px;
+  margin: auto;
+  padding: 30px;
+  min-height: 100vh;
+  color: white;
+}
+
+body {
+  background: #030712;
+}
+
+.answer-card::-webkit-scrollbar {
+  width: 8px;
+}
+
+.answer-card::-webkit-scrollbar-thumb {
+  background: #4b5563;
+  border-radius: 20px;
+}
+
+.question-box {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  background: #111827;
+  border: 1px solid #374151;
+  border-radius: 16px;
+  padding: 25px;
+}
+
+.question-box textarea {
+  min-height: 120px;
+  padding: 15px;
+  font-size: 16px;
+  resize: vertical;
+  background: #0f172a;
+  color: white;
+  border: 1px solid #374151;
+  border-radius: 10px;
+  outline: none;
+}
+
+.question-box textarea:focus {
+  border-color: #6366f1;
+}
+
+.question-box button {
+  width: 150px;
+  padding: 12px;
+  cursor: pointer;
+  border: none;
+  border-radius: 10px;
+  background: #4f46e5;
+  color: white;
+  font-weight: 600;
+  transition: 0.2s;
+}
+
+.question-box button:hover {
+  background: #4338ca;
+}
+
+.question-box button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.answer-card {
+    text-align: left;
+  margin-top: 30px;
+  padding: 30px;
+  background: #111827;
+  border: 1px solid #374151;
+  border-radius: 16px;
+  max-width: 900px;
+  max-height: 700px;
+  overflow-y: auto;
+  margin: 30px auto 0;
+}
+
+.markdown {
+  line-height: 1.8;
+  color: #e5e7eb;
+  text-align: left;
+}
+
+.markdown p {
+  margin: 12px 0;
+}
+
+.markdown h1,
+.markdown h2,
+.markdown h3,
+.markdown h4 {
+  margin-top: 24px;
+  margin-bottom: 12px;
+  color: white;
+}
+
+.markdown ul,
+.markdown ol {
+  padding-left: 25px;
+}
+
+.markdown li {
+  margin: 8px 0;
+}
+
+.markdown code {
+  background: #1f2937;
+  color: #93c5fd;
+  padding: 2px 6px;
+  border-radius: 5px;
+}
+
+.markdown pre {
+  background: #0f172a;
+  padding: 16px;
+  border-radius: 10px;
+  overflow-x: auto;
+}
+
+.sources {
+  margin-top: 30px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  border-top: 1px solid #374151;
+  padding-top: 20px;
+}
+
+.source-chip {
+  background: #312e81;
+  color: white;
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.source-chip:hover {
+  background: #4338ca;
+}
+
+.loading {
+  margin-top: 20px;
+  font-size: 18px;
+  color: #818cf8;
+  font-weight: 600;
+}

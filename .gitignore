@@ -1,0 +1,7 @@
+node_modules/
+uploads/
+extracted/
+
+backend/.env
+frontend/.env
+.env

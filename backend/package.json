@@ -1,0 +1,33 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "nodemon server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@babel/parser": "^7.29.7",
+    "@babel/traverse": "^7.29.7",
+    "@google/generative-ai": "^0.24.1",
+    "@langchain/core": "^1.2.1",
+    "@langchain/openai": "^1.5.3",
+    "@xenova/transformers": "^2.17.2",
+    "adm-zip": "^0.5.17",
+    "chromadb": "^3.4.3",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "langchain": "^1.5.2",
+    "mongoose": "^9.7.2",
+    "multer": "^2.2.0",
+    "unzipper": "^0.12.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
+}
