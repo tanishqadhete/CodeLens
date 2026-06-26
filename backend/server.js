@@ -13,6 +13,10 @@ app.use(express.json());
 const uploadRoutes = require("./routes/uploadRoutes");
 const documentationRoutes = require("./routes/documentationRoutes");
 const chatRoutes = require("./routes/chatRoutes");
+const apiRoutes = require("./routes/apiRoutes");
+const deadCodeRoutes = require(
+  "./routes/deadCodeRoutes"
+);
 
 app.use("/api/upload", uploadRoutes);
 app.use("/api/graph", graphRoutes);
@@ -23,6 +27,11 @@ app.use(
 app.use(
   "/api/chat",
   chatRoutes
+);
+app.use("/api/apis", apiRoutes);
+app.use(
+  "/api/dead-code",
+  deadCodeRoutes
 );
 
 app.listen(5000, () => {

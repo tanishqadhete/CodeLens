@@ -46,7 +46,10 @@ function UploadPage() {
       // Get extracted folder path
       const extractedFolder =
         uploadRes.data.extractedFolder.replace(/\\/g, "/");
-
+      localStorage.setItem(
+        "projectPath",
+        extractedFolder
+      );
       // Generate dependency graph
       const graphRes = await axios.post(
         "http://localhost:5000/api/graph",

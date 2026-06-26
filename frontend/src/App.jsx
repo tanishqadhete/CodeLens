@@ -2,6 +2,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 import UploadPage from "./pages/UploadPage";
 import ChatPage from "./pages/ChatPage";
+import ApiExplorer from "./pages/ApiExplorer";
+import DeadCode from "./pages/DeadCode";
 
 function App() {
   return (
@@ -9,6 +11,8 @@ function App() {
       <Routes>
         <Route path="/" element={<UploadPage />} />
         <Route path="/chat" element={<ChatPage />} />
+        <Route path="/apis" element={<ApiExplorer />} />
+        <Route path="/dead-code" element={<DeadCode />} />
       </Routes>
     </BrowserRouter>
   );
