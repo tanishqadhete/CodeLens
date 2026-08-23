@@ -18,7 +18,7 @@ const [loadingExplanation, setLoadingExplanation] = useState(null);
       console.log("Project Path:", projectPath);
 
       const res = await axios.post(
-        "http://localhost:5000/api/apis",
+        `${import.meta.env.VITE_API_URL}/api/apis`,
         {
           projectPath,
         }
@@ -40,7 +40,7 @@ const [loadingExplanation, setLoadingExplanation] = useState(null);
     setLoadingExplanation(node.id);
 
     const res = await axios.post(
-      "http://localhost:5000/api/apis/explain-node",
+      `${import.meta.env.VITE_API_URL}/api/apis/explain-node`,
       {
         node,
         route: selectedApi.route,

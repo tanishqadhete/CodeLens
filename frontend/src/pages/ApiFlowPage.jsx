@@ -17,7 +17,7 @@ function ApiFlowPage() {
       const projectPath = localStorage.getItem("projectPath");
 
       const res = await axios.post(
-        "http://localhost:5000/api/apis",
+        `${import.meta.env.VITE_API_URL}/api/apis`,
         {
           projectPath,
           graph: true,

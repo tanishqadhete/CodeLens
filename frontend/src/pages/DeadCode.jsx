@@ -11,7 +11,7 @@ function DeadCode() {
 
   const fetchDeadCode = async () => {
     const res = await axios.post(
-      "http://localhost:5000/api/dead-code",
+      `${import.meta.env.VITE_API_URL}/api/dead-code`,
       {
         projectPath:
           localStorage.getItem(

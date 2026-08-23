@@ -550,7 +550,7 @@ npm run dev
 The backend will run on:
 
 ```text
-http://localhost:5000
+https://codelens-backend-h60y.onrender.com
 ```
 
 ---

@@ -25,7 +25,7 @@ function ChatPage() {
       setSources([]);
 
       const response = await fetch(
-        "http://localhost:5000/api/chat/ask",
+        `${import.meta.env.VITE_API_URL}/api/chat/ask`,
         {
           method: "POST",
           headers: {
