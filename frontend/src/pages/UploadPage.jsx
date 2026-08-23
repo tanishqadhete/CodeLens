@@ -1,6 +1,7 @@
 import { useState } from "react";
 import axios from "axios";
 import DependencyGraph from "../components/DependencyGraph";
+import { useNavigate } from "react-router-dom";
 
 function UploadPage() {
   const [file, setFile] = useState(null);
@@ -10,6 +11,7 @@ function UploadPage() {
 
   const [nodes, setNodes] = useState([]);
   const [edges, setEdges] = useState([]);
+  const navigate = useNavigate();
 
   const handleUpload = async () => {
     if (!file) {
@@ -37,31 +39,37 @@ function UploadPage() {
           },
         }
       );
-
       console.log("Upload Response:", uploadRes.data);
 
-      setMessage(uploadRes.data.message);
-      setCount(uploadRes.data.filesExtracted);
 
-      // Get extracted folder path
-      const extractedFolder =
-        uploadRes.data.extractedFolder.replace(/\\/g, "/");
-      localStorage.setItem(
-        "projectPath",
-        extractedFolder
-      );
+setMessage(uploadRes.data.message);
+
+setCount(uploadRes.data.filesExtracted);
+
+
+// Save repository path
+// Save repository path
+const projectPath = uploadRes.data.projectPath;
+
+if (!projectPath) {
+  throw new Error("Project path not received from server");
+}
+
+const normalizedPath =
+  projectPath.replace(/\\/g, "/");
+
+localStorage.setItem(
+  "projectPath",
+  normalizedPath
+);
+
+console.log(
+  "Saved project path:",
+  normalizedPath
+);
       // Generate dependency graph
-      const graphRes = await axios.post(
-        "http://localhost:5000/api/graph",
-        {
-          projectPath: extractedFolder,
-        }
-      );
 
-      console.log("Graph Response:", graphRes.data);
-
-      setNodes(graphRes.data.nodes);
-      setEdges(graphRes.data.edges);
+      navigate("/dashboard");
     } catch (err) {
       console.log(err);
 
