@@ -1,9 +1,5 @@
 import dagre from "dagre";
 
-const dagreGraph = new dagre.graphlib.Graph();
-
-dagreGraph.setDefaultEdgeLabel(() => ({}));
-
 const nodeWidth = 220;
 const nodeHeight = 50;
 
@@ -12,11 +8,18 @@ export const getLayoutedElements = (
   edges,
   direction = "TB"
 ) => {
-  const isHorizontal = direction === "LR";
+  // Create a NEW graph every time
+  const dagreGraph = new dagre.graphlib.Graph();
+
+  dagreGraph.setDefaultEdgeLabel(() => ({}));
 
   dagreGraph.setGraph({
     rankdir: direction,
+    ranksep: 100,
+    nodesep: 80,
   });
+
+  const isHorizontal = direction === "LR";
 
   nodes.forEach((node) => {
     dagreGraph.setNode(node.id, {
@@ -26,39 +29,25 @@ export const getLayoutedElements = (
   });
 
   edges.forEach((edge) => {
-    dagreGraph.setEdge(
-      edge.source,
-      edge.target
-    );
+    dagreGraph.setEdge(edge.source, edge.target);
   });
 
   dagre.layout(dagreGraph);
 
-  const layoutedNodes = nodes.map((node) => {
-    const nodeWithPosition =
-      dagreGraph.node(node.id);
-
-    return {
-      ...node,
-      targetPosition: isHorizontal
-        ? "left"
-        : "top",
-      sourcePosition: isHorizontal
-        ? "right"
-        : "bottom",
-      position: {
-        x:
-          nodeWithPosition.x -
-          nodeWidth / 2,
-        y:
-          nodeWithPosition.y -
-          nodeHeight / 2,
-      },
-    };
-  });
-
   return {
-    nodes: layoutedNodes,
+    nodes: nodes.map((node) => {
+      const pos = dagreGraph.node(node.id);
+
+      return {
+        ...node,
+        targetPosition: isHorizontal ? "left" : "top",
+        sourcePosition: isHorizontal ? "right" : "bottom",
+        position: {
+          x: pos.x - nodeWidth / 2,
+          y: pos.y - nodeHeight / 2,
+        },
+      };
+    }),
     edges,
   };
 };

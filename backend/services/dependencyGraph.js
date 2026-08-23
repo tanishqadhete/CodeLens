@@ -10,47 +10,47 @@ const supportedExtensions = [
   ".tsx"
 ];
 
+function getShortLabel(filePath) {
+  const normalized = filePath.replace(/\\/g, "/");
+  const parts = normalized.split("/");
+  if (parts.length >= 2) {
+    return `${parts[parts.length - 2]}/${parts[parts.length - 1]}`;
+  }
+  return parts[0];
+}
+
 function getAllFiles(dir, files = []) {
   const items = fs.readdirSync(dir);
-
   for (const item of items) {
     const fullPath = path.join(dir, item);
-
     if (fs.statSync(fullPath).isDirectory()) {
       getAllFiles(fullPath, files);
     } else {
       const ext = path.extname(fullPath);
-
       if (supportedExtensions.includes(ext)) {
         files.push(fullPath);
       }
     }
   }
-
   return files;
 }
 
 export const generateDependencyGraph = (projectPath) => {
   const files = getAllFiles(projectPath);
-
   const edges = [];
-
   files.forEach((file) => {
-    const code = fs.readFileSync(file, "utf-8");
+    const code = fs.readFileSync(file, "utf-8"); //string
     const relativeFile = path
       .relative(projectPath, file)
       .replace(/\\/g, "/");
-
     try {
       const ast = parse(code, {
         sourceType: "unambiguous",
         plugins: ["jsx", "typescript"],
       });
-
       traverse.default(ast, {
         ImportDeclaration({ node }) {
           const target = node.source.value;
-
           // Ignore npm packages
           if (
             !target.startsWith("./") &&
@@ -58,7 +58,6 @@ export const generateDependencyGraph = (projectPath) => {
           ) {
             return;
           }
-
           const resolvedPath = path
             .normalize(
               path.join(
@@ -130,15 +129,16 @@ export const generateDependencyGraph = (projectPath) => {
   });
 
   const nodes = Array.from(nodeSet).map((node, index) => ({
-    id: node,
-    data: {
-      label: node,
-    },
-    position: {
-      x: (index % 5) * 250,
-      y: Math.floor(index / 5) * 150,
-    },
-  }));
+  id: node, // Keep full path for graph connections
+  data: {
+    label: getShortLabel(node), // Display name
+    fullPath: node,             // Store original path
+  },
+  position: {
+    x: (index % 5) * 250,
+    y: Math.floor(index / 5) * 150,
+  },
+}));
 
   const flowEdges = uniqueEdges.map((edge, index) => ({
     id: `e${index}`,
