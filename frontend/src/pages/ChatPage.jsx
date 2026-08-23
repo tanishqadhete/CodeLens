@@ -1,5 +1,13 @@
 import { useState } from "react";
 import ReactMarkdown from "react-markdown";
+import {
+  MessageSquare,
+  Sparkles,
+  Send,
+  FileCode2,
+  CheckCircle2,
+  BookOpen,
+} from "lucide-react";
 import "./ChatPage.css";
 
 function ChatPage() {
@@ -7,9 +15,6 @@ function ChatPage() {
   const [answer, setAnswer] = useState("");
   const [sources, setSources] = useState([]);
   const [loading, setLoading] = useState(false);
-
-  // Replace with your actual projectId for now
-  const projectId = "6860abcdef12345678901234";
 
   const askQuestion = async () => {
     if (!question.trim()) return;
@@ -27,7 +32,7 @@ function ChatPage() {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            projectId,
+            repositoryPath: localStorage.getItem("projectPath"),
             question,
           }),
         }
@@ -45,52 +50,215 @@ function ChatPage() {
     }
   };
 
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      askQuestion();
+    }
+  };
+
+  const projectName =
+    localStorage.getItem("projectName") ||
+    "Current Repository";
+
   return (
     <div className="chat-page">
-      <h1>Chat with Repository</h1>
 
-      <div className="question-box">
-        <textarea
-          placeholder="Ask something about the repository..."
-          value={question}
-          onChange={(e) => setQuestion(e.target.value)}
-        />
+      {/* Header */}
+      <header className="chat-header">
 
-        <button onClick={askQuestion}>
-          Ask
-        </button>
+        <div>
+          <div className="chat-eyebrow">
+            <Sparkles size={14} />
+            REPOSITORY INTELLIGENCE
+          </div>
+
+          <h1 className="chat-title">
+            Chat with your repository
+          </h1>
+
+          <p className="chat-subtitle">
+            Ask questions about your codebase and get answers
+            using the indexed repository context.
+          </p>
+        </div>
+
+      </header>
+
+      {/* Repository Context */}
+      <div className="chat-repository">
+
+        <div className="chat-repository-icon">
+          <FileCode2 size={19} />
+        </div>
+
+        <div className="chat-repository-info">
+          <div className="chat-repository-label">
+            CURRENT REPOSITORY
+          </div>
+
+          <div className="chat-repository-name">
+            {projectName}
+          </div>
+        </div>
+
+        <div className="chat-repository-status">
+          <CheckCircle2 size={14} />
+          Indexed
+        </div>
+
       </div>
 
-      {loading && (
-        <div className="loading">
-          Analyzing repository...
-        </div>
-      )}
+      {/* Chat Workspace */}
+      <div className="chat-workspace">
 
-      {answer && (
-        <div className="answer-card">
-          <h2>Answer</h2>
+        {/* Question Area */}
+        <div className="question-box">
 
-          <div className="markdown">
-            <ReactMarkdown>
-              {answer}
-            </ReactMarkdown>
+          <div className="question-header">
+            <div className="question-icon">
+              <MessageSquare size={18} />
+            </div>
+
+            <div>
+              <h2>Ask about your code</h2>
+
+              <p>
+                Questions are answered using relevant repository
+                context retrieved by CodeLens.
+              </p>
+            </div>
           </div>
 
-          <h3>Sources</h3>
+          <div className="question-input-wrapper">
 
-          <div className="sources">
-            {sources.map((source) => (
-              <span
-                key={source}
-                className="source-chip"
-              >
-                {source}
+            <textarea
+              placeholder="e.g. How does authentication work in this project?"
+              value={question}
+              onChange={(e) => setQuestion(e.target.value)}
+              onKeyDown={handleKeyDown}
+              disabled={loading}
+            />
+
+            <div className="question-input-footer">
+
+              <span className="question-hint">
+                Press Enter to ask · Shift + Enter for a new line
               </span>
-            ))}
+
+              <button
+                onClick={askQuestion}
+                disabled={loading || !question.trim()}
+                className="ask-button"
+              >
+                {loading ? (
+                  <>
+                    <span className="button-spinner" />
+                    Analyzing
+                  </>
+                ) : (
+                  <>
+                    Ask
+                    <Send size={15} />
+                  </>
+                )}
+              </button>
+
+            </div>
+
           </div>
+
         </div>
-      )}
+
+        {/* Loading */}
+        {loading && (
+          <div className="chat-loading">
+
+            <div className="loading-icon">
+              <Sparkles size={18} />
+            </div>
+
+            <div>
+              <strong>Analyzing repository...</strong>
+
+              <p>
+                Retrieving relevant code and generating an answer.
+              </p>
+            </div>
+
+          </div>
+        )}
+
+        {/* Answer */}
+        {answer && !loading && (
+          <div className="answer-card">
+
+            <div className="answer-header">
+
+              <div className="answer-title-wrapper">
+
+                <div className="answer-icon">
+                  <Sparkles size={18} />
+                </div>
+
+                <div>
+                  <h2>Repository Answer</h2>
+
+                  <p>
+                    Generated from your indexed codebase
+                  </p>
+                </div>
+
+              </div>
+
+            </div>
+
+            <div className="markdown">
+              <ReactMarkdown>
+                {answer}
+              </ReactMarkdown>
+            </div>
+
+            {/* Sources */}
+            {sources.length > 0 && (
+              <div className="sources-section">
+
+                <div className="sources-header">
+
+                  <BookOpen size={16} />
+
+                  <div>
+                    <h3>Retrieved Sources</h3>
+
+                    <p>
+                      Repository files used to answer your question.
+                    </p>
+                  </div>
+
+                </div>
+
+                <div className="sources">
+
+                  {sources.map((source) => (
+                    <span
+                      key={source}
+                      className="source-chip"
+                    >
+                      <FileCode2 size={13} />
+                      {source}
+                    </span>
+                  ))}
+
+                </div>
+
+              </div>
+            )}
+
+          </div>
+        )}
+
+      </div>
+
     </div>
   );
 }

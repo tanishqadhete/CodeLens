@@ -1,14 +1,99 @@
-function chunkCode(text, chunkSize = 1000, overlap = 200) {
+const { parse } = require("@babel/parser");
+const traverse = require("@babel/traverse").default;
+
+function chunkCode(code, filePath) {
   const chunks = [];
 
-  let start = 0;
+  try {
+    const ast = parse(code, {
+      sourceType: "unambiguous",
+      plugins: ["jsx", "typescript"],
+    });
 
-  while (start < text.length) {
-    const end = start + chunkSize;
+    traverse(ast, {
+  FunctionDeclaration(path) {
+    addChunk(path.node, "function", path.node.id?.name);
+  },
 
-    chunks.push(text.slice(start, end));
+  FunctionExpression(path) {
+    addChunk(
+      path.node,
+      "function",
+      path.parent?.id?.name || "anonymous"
+    );
+  },
 
-    start += chunkSize - overlap;
+  ArrowFunctionExpression(path) {
+    addChunk(
+      path.node,
+      "function",
+      path.parent?.id?.name || "anonymous"
+    );
+  },
+
+  ClassDeclaration(path) {
+    addChunk(path.node, "class", path.node.id?.name);
+  },
+
+  // NEW
+  VariableDeclarator(path) {
+    const node = path.node;
+
+    if (
+      node.init &&
+      node.init.type === "CallExpression" &&
+      node.init.callee.type === "MemberExpression" &&
+      node.init.callee.object.name === "mongoose" &&
+      node.init.callee.property.name === "model"
+    ) {
+      addChunk(
+        node,
+        "model",
+        node.id?.name
+      );
+    }
+  },
+  ExpressionStatement(path) { 
+  const expression = path.node.expression; 
+ 
+  if ( 
+    expression.type === "AssignmentExpression" && 
+    expression.right.type === "CallExpression" && 
+    expression.right.callee.type === "MemberExpression" && 
+    expression.right.callee.object.name === "mongoose" && 
+    expression.right.callee.property.name === "model" 
+  ) { 
+    const modelCall = expression.right; 
+ 
+    const modelName = 
+      modelCall.arguments[0]?.value; 
+ 
+    if (modelName) { 
+      addChunk( 
+        modelCall, 
+        "model", 
+        modelName 
+      ); 
+    } 
+  } 
+},
+});
+
+    function addChunk(node, chunkType, symbolName) {
+      if (!node.loc) return;
+
+      chunks.push({
+        chunk: code.slice(node.start, node.end),
+        chunkType,
+        symbolName: symbolName || "anonymous",
+        startLine: node.loc.start.line,
+        endLine: node.loc.end.line,
+        filePath,
+      });
+    }
+
+  } catch (err) {
+    console.error(`Failed to parse ${filePath}:`, err.message);
   }
 
   return chunks;
