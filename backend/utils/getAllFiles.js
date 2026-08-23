@@ -10,18 +10,14 @@ const ignored = [
   "dist",
   "build",
   ".next",
+  ".vscode"
 ];
 
 const allowedExtensions = [
   ".js",
   ".jsx",
   ".ts",
-  ".tsx",
-  ".json",
-  ".css",
-  ".html",
-  ".md",
-  ".env",
+  ".tsx"
 ];
 
 function getAllFiles(dir, files = []) {
