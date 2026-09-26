@@ -5,22 +5,26 @@ function ApiExplorer() {
   const [apis, setApis] = useState([]);
   const [selectedApi, setSelectedApi] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [explanations, setExplanations] = useState({});
-const [loadingExplanation, setLoadingExplanation] = useState(null);
+
   useEffect(() => {
     fetchApis();
   }, []);
 
   const fetchApis = async () => {
     try {
-      const projectPath =
-      localStorage.getItem("projectPath");
-      console.log("Project Path:", projectPath);
+      const projectId =
+        localStorage.getItem("projectId");
+
+      if (!projectId) {
+        throw new Error("Project ID not found");
+      }
+
+      console.log("Project ID:", projectId);
 
       const res = await axios.post(
         `${import.meta.env.VITE_API_URL}/api/apis`,
         {
-          projectPath,
+          projectId,
         }
       );
       console.log(res.data);
@@ -31,33 +35,6 @@ const [loadingExplanation, setLoadingExplanation] = useState(null);
       setLoading(false);
     }
   };
-
-  const explainNode = async (node) => {
-  // Return cached explanation if available
-  if (explanations[node.id]) return;
-
-  try {
-    setLoadingExplanation(node.id);
-
-    const res = await axios.post(
-      `${import.meta.env.VITE_API_URL}/api/apis/explain-node`,
-      {
-        node,
-        route: selectedApi.route,
-        method: selectedApi.method,
-      }
-    );
-
-    setExplanations((prev) => ({
-      ...prev,
-      [node.id]: res.data.explanation,
-    }));
-  } catch (err) {
-    console.error(err);
-  } finally {
-    setLoadingExplanation(null);
-  }
-};
 
   if (loading) {
     return <h2>Loading APIs...</h2>;
@@ -160,31 +137,7 @@ const [loadingExplanation, setLoadingExplanation] = useState(null);
           </strong>
 
           <span>{node.function}</span>
-
-          <button style={{color: "white"}}
-            onClick={() => explainNode(node)}
-          >
-            ?
-          </button>
         </div>
-
-        {loadingExplanation === node.id && (
-          <p style={{color: "white"}}>Thinking...</p>
-        )}
-
-        {explanations[node.id] && (
-          <div
-            style={{
-              marginTop: "8px",
-              padding: "10px",
-              background: "#f5f5f5",
-              borderRadius: "6px",
-              color: "white",
-            }}
-          >
-            {explanations[node.id]}
-          </div>
-        )}
 
         {index !== selectedApi.flow.length - 1 && (
           <div

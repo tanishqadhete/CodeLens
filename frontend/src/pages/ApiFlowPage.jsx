@@ -14,12 +14,14 @@ function ApiFlowPage() {
 
   const fetchFlow = async () => {
     try {
-      const projectPath = localStorage.getItem("projectPath");
-
+      const projectId = localStorage.getItem("projectId");
+      if (!projectId) {
+        throw new Error("Project ID not found");
+      }
       const res = await axios.post(
         `${import.meta.env.VITE_API_URL}/api/apis`,
         {
-          projectPath,
+          projectId,
           graph: true,
         }
       );

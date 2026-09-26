@@ -23,8 +23,12 @@ function RepositoryOverview() {
 
   async function fetchOverview() {
     try {
-      const projectPath =
-        localStorage.getItem("projectPath");
+      const projectId =
+        localStorage.getItem("projectId");
+
+      if (!projectId) {
+        throw new Error("Project ID not found");
+      }
 
       const response = await fetch(
         `${import.meta.env.VITE_API_URL}/api/overview`,
@@ -34,7 +38,7 @@ function RepositoryOverview() {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            projectPath,
+            projectId,
           }),
         }
       );

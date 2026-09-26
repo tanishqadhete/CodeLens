@@ -24,6 +24,12 @@ function ChatPage() {
       setAnswer("");
       setSources([]);
 
+      const projectId = localStorage.getItem("projectId");
+
+      if (!projectId) {
+        throw new Error("Project ID not found");
+      }
+
       const response = await fetch(
         `${import.meta.env.VITE_API_URL}/api/chat/ask`,
         {
@@ -32,7 +38,7 @@ function ChatPage() {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            repositoryPath: localStorage.getItem("projectPath"),
+            projectId,
             question,
           }),
         }

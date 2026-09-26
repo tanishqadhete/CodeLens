@@ -1,11 +1,9 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 import LandingPage from "./pages/LandingPage";
-import UploadPage from "./pages/UploadPage";
 import Dashboard from "./pages/Dashboard";
 import ApiExplorer from "./pages/ApiExplorer";
 import ChatPage from "./pages/ChatPage";
-import DeadCode from "./pages/DeadCode";
 import DependencyGraphPage from "./pages/DependencyGraphPage";
 import DashboardLayout from "./layouts/DashboardLayout";
 import ApiFlowPage from "./pages/ApiFlowPage";
@@ -18,9 +16,6 @@ function App() {
       <Routes>
         {/* Landing */}
         <Route path="/" element={<LandingPage />} />
-
-        {/* Upload */}
-        <Route path="/upload" element={<UploadPage />} />
 
         {/* Dashboard Layout */}
         <Route element={<DashboardLayout />}>
@@ -50,11 +45,6 @@ function App() {
           />
 
           <Route
-            path="/dead-code"
-            element={<DeadCode />}
-          />
-
-          <Route
             path="/chat"
             element={<ChatPage />}
           />
@@ -62,10 +52,6 @@ function App() {
   path="/about"
   element={<AboutPage />}
 />
-          <Route
-            path="/documentation"
-            element={<h1>Documentation</h1>}
-          />
         </Route>
       </Routes>
     </BrowserRouter>

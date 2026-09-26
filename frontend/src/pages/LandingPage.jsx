@@ -32,8 +32,8 @@ function LandingPage() {
       console.log(res.data);
 
       localStorage.setItem(
-        "projectPath",
-        res.data.projectPath
+        "projectId",
+        res.data.projectId
       );
 
       localStorage.setItem(
@@ -69,8 +69,8 @@ function LandingPage() {
       console.log(res.data);
 
       localStorage.setItem(
-        "projectPath",
-        res.data.projectPath
+        "projectId",
+        res.data.projectId
       );
 
       localStorage.setItem(

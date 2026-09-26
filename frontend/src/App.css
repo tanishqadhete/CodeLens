@@ -484,6 +484,15 @@
   .dashboard-content {
     width: calc(100% - 72px);
   }
+
+  .sidebar-delete-link {
+  width: 100%;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
 }
 
 /* ========================================

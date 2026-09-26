@@ -1,4 +1,4 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
   Network,
@@ -6,9 +6,13 @@ import {
   MessageSquare,
   Info,
   FolderCode,
+  Trash2,
 } from "lucide-react";
+import axios from "axios";
 
 function Sidebar() {
+  const navigate = useNavigate();
+
   const links = [
     {
       name: "Dashboard",
@@ -36,6 +40,39 @@ function Sidebar() {
       icon: MessageSquare,
     },
   ];
+
+  const handleDeleteProject = async () => {
+    const projectId = localStorage.getItem("projectId");
+
+    if (!projectId) {
+      navigate("/");
+      return;
+    }
+
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this project? This will remove the indexed repository data and cannot be undone."
+    );
+
+    if (!confirmed) return;
+
+    try {
+      await axios.delete(
+        `${import.meta.env.VITE_API_URL}/api/projects/${projectId}`
+      );
+
+      localStorage.removeItem("projectId");
+      localStorage.removeItem("projectName");
+
+      navigate("/");
+    } catch (error) {
+      console.error("Failed to delete project:", error);
+
+      alert(
+        error.response?.data?.message ||
+          "Failed to delete project. Please try again."
+      );
+    }
+  };
 
   return (
     <aside className="sidebar">
@@ -98,6 +135,15 @@ function Sidebar() {
           <Info size={18} strokeWidth={1.8} />
           <span>About CodeLens</span>
         </NavLink>
+
+        <button
+          type="button"
+          className="sidebar-link sidebar-delete-link"
+          onClick={handleDeleteProject}
+        >
+          <Trash2 size={18} strokeWidth={1.8} />
+          <span>Delete Project</span>
+        </button>
 
         <div className="sidebar-footer">
           <div className="sidebar-footer-dot" />

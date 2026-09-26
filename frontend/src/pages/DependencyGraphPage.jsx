@@ -20,23 +20,27 @@ function DependencyGraphPage() {
   }, []);
 
   const fetchGraph = async () => {
-    try {
-      const projectPath =
-        localStorage.getItem("projectPath");
+  try {
+    const projectId =
+      localStorage.getItem("projectId");
 
-      const res = await axios.post(
-        `${import.meta.env.VITE_API_URL}/api/graph`,
-        {
-          projectPath,
-        }
-      );
-
-      setNodes(res.data.nodes);
-      setEdges(res.data.edges);
-    } catch (err) {
-      console.log(err);
+    if (!projectId) {
+      throw new Error("Project ID not found");
     }
-  };
+
+    const res = await axios.post(
+      `${import.meta.env.VITE_API_URL}/api/graph`,
+      {
+        projectId,
+      }
+    );
+
+    setNodes(res.data.nodes);
+    setEdges(res.data.edges);
+  } catch (err) {
+    console.log(err);
+  }
+};
 
   const filteredNodes = useMemo(() => {
     if (!search) return nodes;
