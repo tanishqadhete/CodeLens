@@ -6,7 +6,8 @@ const {
 } = require(
   "../controllers/chatController"
 );
+const updateProjectActivity = require("../middleware/updateProjectActivity");
 
-router.post("/ask", askQuestion);
+router.post( "/ask", updateProjectActivity, askQuestion );
 
 module.exports = router;

@@ -1,10 +1,20 @@
 const retrieveChunks = require("../services/chatService");
 const askGemini = require("../services/geminiService");
+const Project = require("../models/Project");
 
 exports.askQuestion = async (req, res) => {
   try {
-    const { repositoryPath, question } = req.body;
+    const { projectId, question } = req.body;
+    const project = await Project.findOne({ projectId });
 
+        if (!project) {
+            return res.status(404).json({
+                success: false,
+                message: "Project not found"
+            });
+        }
+
+        const repositoryPath = project.projectPath;
     if (!repositoryPath || !question) {
       return res.status(400).json({
         message: "repositoryPath and question are required",
@@ -22,23 +32,11 @@ exports.askQuestion = async (req, res) => {
       });
     }
 
-
-    // --------------------------------------------------
-    // Build context for Gemini
-    // --------------------------------------------------
-
     const context = chunks
       .map((c, index) => {
-
-        // ----------------------------------------------
-        // API FLOW
-        // ----------------------------------------------
-
         if (c.apiFlowMatch) {
-
           const flowText = c.flow
             .map((node) => {
-
               if (node.type === "response") {
                 return "→ HTTP Response";
               }
@@ -47,7 +45,6 @@ exports.askQuestion = async (req, res) => {
                 `${node.type}: ` +
                 `${node.file}::${node.function}`
               );
-
             })
             .join("\n");
 
@@ -64,13 +61,7 @@ ${c.handlers.join(", ")}
 EXECUTION FLOW:
 ${flowText}
 `;
-
         }
-
-
-        // ----------------------------------------------
-        // CODE
-        // ----------------------------------------------
 
         return `
 ========== CODE ${index + 1} ==========
@@ -82,28 +73,13 @@ LINES: ${c.startLine}-${c.endLine}
 
 ${c.chunk}
 `;
-
       })
       .join("\n");
 
-
-    // --------------------------------------------------
-    // Ask Gemini
-    // --------------------------------------------------
-
-    
     const answer = await askGemini(
       context,
       question
     );
-    
-
-    
-
-
-    // --------------------------------------------------
-    // Sources
-    // --------------------------------------------------
 
     const sources = [
       ...new Set(
@@ -115,20 +91,16 @@ ${c.chunk}
       ),
     ];
 
-
     res.status(200).json({
       answer,
       sources,
     });
-
   } catch (err) {
-
     console.error("Chat Error:", err);
 
     res.status(500).json({
       message: "Failed to answer question",
       error: err.message,
     });
-
   }
 };
