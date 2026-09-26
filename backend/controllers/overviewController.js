@@ -1,8 +1,32 @@
-const overviewService = require("../services/overviewService");
+import overviewService from "../services/overviewService.js";
+import resolveProjectPath from "../utils/projectPath.js";
 
-exports.getOverview = async (req, res) => {
+export const getOverview = async (req, res) => {
   try {
-    const { projectPath } = req.body;
+    const { projectId } = req.body;
+
+    console.log("Overview projectId:", projectId);
+
+    const projectPath = await resolveProjectPath(projectId);
+
+    console.log("Overview projectPath:", projectPath);
+
+    const data = await overviewService.generateOverview(projectPath);
+
+    res.json(data);
+  } catch (err) {
+    console.error("Overview error:", err);
+
+    res.status(500).json({
+      message: "Failed to generate overview",
+    });
+  }
+};
+
+/*export const getOverview = async (req, res) => {
+  try {
+    const { projectId } = req.body;
+    const projectPath = await resolveProjectPath(projectId);
 
     const data = await overviewService.generateOverview(projectPath);
 
@@ -14,4 +38,4 @@ exports.getOverview = async (req, res) => {
       message: "Failed to generate overview",
     });
   }
-};
+};*/

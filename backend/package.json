@@ -26,6 +26,7 @@
     "langchain": "^1.5.2",
     "mongoose": "^9.7.2",
     "multer": "^2.2.0",
+    "node-cron": "^4.6.0",
     "simple-git": "^3.36.0",
     "unzipper": "^0.12.5"
   },

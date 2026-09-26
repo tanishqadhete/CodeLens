@@ -1,11 +1,15 @@
 const express = require("express");
 const router = express.Router();
-const apiController = require("../controllers/apiController");
+
 const {
   getApis,
 } = require("../controllers/apiController");
+const updateProjectActivity = require("../middleware/updateProjectActivity");
 
-router.post("/", getApis);
-router.post("/explain-node", apiController.explainNode);
+router.post(
+  "/",
+  updateProjectActivity,
+  getApis
+);
 
 module.exports = router;

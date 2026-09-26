@@ -1,8 +1,10 @@
 import { generateDependencyGraph } from "../services/dependencyGraph.js";
+import resolveProjectPath from "../utils/projectPath.js";
 
 export const getDependencyGraph = async (req, res) => {
   try {
-    const { projectPath } = req.body;
+    const { projectId } = req.body;
+    const projectPath = await resolveProjectPath(projectId);
 
     const graph = generateDependencyGraph(projectPath);
 
