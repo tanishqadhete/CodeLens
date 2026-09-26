@@ -2,7 +2,19 @@ const mongoose = require("mongoose");
 
 const apiFlowSchema = new mongoose.Schema(
   {
+    projectId: {
+      type: String,
+      required: true,
+      index: true,
+    },
+
     repositoryPath: {
+      type: String,
+      required: true,
+      index: true,
+    },
+
+    runId: {
       type: String,
       required: true,
       index: true,

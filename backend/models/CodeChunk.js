@@ -8,6 +8,12 @@ const codeChunkSchema = new mongoose.Schema(
       index: true,
     },
 
+    runId: {
+      type: String,
+      required: true,
+      index: true,
+    },
+
     filePath: {
       type: String,
       required: true,

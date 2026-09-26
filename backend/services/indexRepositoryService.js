@@ -1,5 +1,6 @@
 const fs = require("fs");
 const path = require("path");
+const crypto = require("crypto");
 
 const CodeChunk = require("../models/CodeChunk");
 const ApiFlow = require("../models/ApiFlow");
@@ -7,161 +8,175 @@ const ApiFlow = require("../models/ApiFlow");
 const chunkCode = require("./chunkService");
 const createEmbedding = require("./embeddingService");
 const getAllFiles = require("../utils/getAllFiles");
+const { clearAstCache } = require("../utils/getAst");
 const extractApis = require("./apiExtractor");
 
+const EMBEDDING_CONCURRENCY = 4;
 
-async function indexRepository(repositoryPath) {
+async function runWithConcurrency(
+  items,
+  worker,
+  concurrency
+) {
+  let nextIndex = 0;
 
-  // ==================================================
-  // 1. Remove old indexed code
-  // ==================================================
+  async function runWorker() {
+    while (true) {
+      const index = nextIndex++;
 
-  await CodeChunk.deleteMany({
-    repositoryPath,
-  });
+      if (index >= items.length) {
+        return;
+      }
 
+      await worker(items[index]);
+    }
+  }
 
-  // ==================================================
-  // 2. Remove old API flows
-  // ==================================================
+  const workers = [];
 
-  await ApiFlow.deleteMany({
-    repositoryPath,
-  });
+  const workerCount = Math.min(
+    concurrency,
+    items.length
+  );
 
+  for (let i = 0; i < workerCount; i++) {
+    workers.push(runWorker());
+  }
 
-  // ==================================================
-  // 3. Get repository files
-  // ==================================================
+  await Promise.all(workers);
+}
 
-  const files = getAllFiles(repositoryPath);
+async function indexRepository(repositoryPath, projectId) {
+  const runId = crypto.randomUUID();
 
+  let indexingFailed = false;
 
-  // ==================================================
-  // 4. Index code chunks
-  // ==================================================
+  clearAstCache();
 
-  for (const file of files) {
+  try {
+    const files = getAllFiles(repositoryPath);
 
-    try {
+    /*
+     * --------------------------------------------------
+     * STEP 1: Read files and create chunks
+     * --------------------------------------------------
+     */
 
-      const content =
-        await fs.promises.readFile(
+    const allChunks = [];
+
+    for (const file of files) {
+      try {
+        const content = await fs.promises.readFile(
           file,
           "utf-8"
         );
 
-
-      const relativePath =
-        path
+        const relativePath = path
           .relative(repositoryPath, file)
           .replace(/\\/g, "/");
 
-
-      // AST-based chunks
-      const chunks =
-        chunkCode(
+        const chunks = chunkCode(
           content,
           relativePath
         );
 
-
-      for (const chunkData of chunks) {
-
-        console.log(
-          `Embedding ${chunkData.symbolName} from ${relativePath}`
+        allChunks.push(
+          ...chunks
         );
 
-
-        // Embed actual code
-        const embedding =
-          await createEmbedding(
-            chunkData.chunk
-          );
-
-
-        await CodeChunk.create({
-
-          repositoryPath,
-
-          filePath:
-            relativePath,
-
-          chunk:
-            chunkData.chunk,
-
-          embedding,
-
-          chunkType:
-            chunkData.chunkType,
-
-          symbolName:
-            chunkData.symbolName,
-
-          startLine:
-            chunkData.startLine,
-
-          endLine:
-            chunkData.endLine,
-
-        });
-
+        console.log(
+          `Prepared ${relativePath}`
+        );
+      } catch (err) {
+        indexingFailed = true;
 
         console.log(
-          `Saved ${chunkData.symbolName}`
+          `Failed: ${file}`
         );
 
+        console.error(err);
       }
-
-
-      console.log(
-        `Indexed ${relativePath}`
-      );
-
-
-    } catch (err) {
-
-      console.log(
-        `Failed: ${file}`
-      );
-
-      console.error(err);
-
     }
 
-  }
+    /*
+     * --------------------------------------------------
+     * STEP 2: Generate embeddings concurrently
+     * --------------------------------------------------
+     */
 
+    console.log(
+      `\nGenerating embeddings for ${allChunks.length} chunks...`
+    );
 
-  // ==================================================
-  // 5. Generate API flows
-  // ==================================================
+    await runWithConcurrency(
+      allChunks,
+      async (chunkData) => {
+        try {
+          console.log(
+            `Embedding ${chunkData.symbolName} from ${chunkData.filePath}`
+          );
 
-  console.log(
-    "\nGenerating API flows..."
-  );
+          const embedding =
+            await createEmbedding(
+              chunkData.chunk
+            );
 
+          await CodeChunk.create({
+            repositoryPath,
+            runId,
+            filePath: chunkData.filePath,
+            chunk: chunkData.chunk,
+            embedding,
+            chunkType: chunkData.chunkType,
+            symbolName: chunkData.symbolName,
+            startLine: chunkData.startLine,
+            endLine: chunkData.endLine,
+          });
 
-  const apis =
-    extractApis(repositoryPath);
+          console.log(
+            `Saved ${chunkData.symbolName}`
+          );
+        } catch (err) {
+          indexingFailed = true;
 
+          console.error(
+            `Failed to embed ${chunkData.symbolName} from ${chunkData.filePath}`
+          );
 
-  console.log(
-    `API flows generated: ${apis.length}`
-  );
+          console.error(err);
+        }
+      },
+      EMBEDDING_CONCURRENCY
+    );
 
+    /*
+     * --------------------------------------------------
+     * STEP 3: Generate API flows
+     * --------------------------------------------------
+     */
 
-  // ==================================================
-  // 6. Store API flows + embeddings
-  // ==================================================
+    console.log(
+      "\nGenerating API flows..."
+    );
 
-  for (const api of apis) {
+    const apis =
+      extractApis(repositoryPath);
 
-    try {
+    console.log(
+      `API flows generated: ${apis.length}`
+    );
 
-      // Convert the structured API flow
-      // into meaningful text for embedding.
+    /*
+     * --------------------------------------------------
+     * STEP 4: Embed API flows concurrently
+     * --------------------------------------------------
+     */
 
-      const flowText = `
+    await runWithConcurrency(
+      apis,
+      async (api) => {
+        try {
+          const flowText = `
 API: ${api.method} ${api.route}
 
 File: ${api.file}
@@ -172,78 +187,100 @@ ${api.handlers.join(", ")}
 Execution Flow:
 ${api.flow
   .map((item) => {
-
     if (item.type === "response") {
       return "HTTP Response";
     }
 
     return `${item.type}: ${item.function} (${item.file})`;
-
   })
   .join("\n")}
 `;
 
+          console.log(
+            `Embedding API flow: ${api.method} ${api.route}`
+          );
 
-      console.log(
-        `Embedding API flow: ${api.method} ${api.route}`
+          const embedding =
+            await createEmbedding(
+              flowText
+            );
+
+          await ApiFlow.create({
+            projectId,
+            repositoryPath,
+            runId,
+            method: api.method,
+            route: api.route,
+            file: api.file,
+            handlers: api.handlers,
+            flow: api.flow,
+            embedding,
+          });
+
+          console.log(
+            `Saved API flow: ${api.method} ${api.route}`
+          );
+        } catch (err) {
+          indexingFailed = true;
+
+          console.error(
+            `Failed to index API flow ${api.method} ${api.route}`
+          );
+
+          console.error(err);
+        }
+      },
+      EMBEDDING_CONCURRENCY
+    );
+
+    /*
+     * --------------------------------------------------
+     * STEP 5: Handle failure
+     * --------------------------------------------------
+     */
+
+    if (indexingFailed) {
+      console.error(
+        "\nRepository indexing failed. Keeping the previous index."
       );
 
-
-      // Create vector representation
-      const embedding =
-        await createEmbedding(
-          flowText
-        );
-
-
-      // Save API flow + embedding
-      await ApiFlow.create({
-
+      await CodeChunk.deleteMany({
         repositoryPath,
-
-        method:
-          api.method,
-
-        route:
-          api.route,
-
-        file:
-          api.file,
-
-        handlers:
-          api.handlers,
-
-        flow:
-          api.flow,
-
-        embedding,
-
+        runId,
       });
 
+      await ApiFlow.deleteMany({
+        repositoryPath,
+        runId,
+      });
 
-      console.log(
-        `Saved API flow: ${api.method} ${api.route}`
+      throw new Error(
+        "Repository indexing failed"
       );
-
-
-    } catch (err) {
-
-      console.error(
-        `Failed to index API flow ${api.method} ${api.route}`
-      );
-
-      console.error(err);
-
     }
 
+    /*
+     * --------------------------------------------------
+     * STEP 6: Replace old generation
+     * --------------------------------------------------
+     */
+
+    await CodeChunk.deleteMany({
+      repositoryPath,
+      runId: { $ne: runId },
+    });
+
+    await ApiFlow.deleteMany({
+      repositoryPath,
+      runId: { $ne: runId },
+    });
+
+    console.log(
+      "\nRepository indexing completed."
+    );
+  } finally {
+    clearAstCache();
   }
-
-
-  console.log(
-    "\nRepository indexing completed."
-  );
-
 }
-
 
 module.exports = indexRepository;
