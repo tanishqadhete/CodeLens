@@ -1,51 +1,96 @@
 const fs = require("fs");
 const path = require("path");
 
-const ignored = [
-"package-lock.json",
-  "yarn.lock",
-  "pnpm-lock.yaml",
+const defaultIgnoredDirs = [
   "node_modules",
   ".git",
   "dist",
   "build",
   ".next",
-  ".vscode"
+  ".vscode",
+];
+
+const defaultIgnoredFiles = [
+  "package-lock.json",
+  "yarn.lock",
+  "pnpm-lock.yaml",
 ];
 
 const allowedExtensions = [
   ".js",
   ".jsx",
   ".ts",
-  ".tsx"
+  ".tsx",
 ];
 
-function getAllFiles(dir, files = []) {
+function isSensitiveFile(filename) {
+  return (
+    filename === ".env" ||
+    filename.startsWith(".env.") ||
+    filename.endsWith(".pem") ||
+    filename.endsWith(".key")
+  );
+}
+
+function getAllFiles(
+  dir,
+  {
+    ignoredDirs = defaultIgnoredDirs,
+    ignoredFiles = defaultIgnoredFiles,
+  } = {},
+  files = []
+) {
   const entries = fs.readdirSync(dir);
 
   for (const entry of entries) {
     const fullPath = path.join(dir, entry);
     const stat = fs.statSync(fullPath);
 
-    // Skip unwanted folders
+    // Skip unwanted directories
     if (
       stat.isDirectory() &&
-      ignored.includes(entry)
+      ignoredDirs.includes(entry)
     ) {
       continue;
     }
-    if (!stat.isDirectory() && stat.size > 500000) {
-        continue;
+
+    // Skip explicitly ignored files
+    if (
+      !stat.isDirectory() &&
+      ignoredFiles.includes(entry)
+    ) {
+      continue;
     }
+
+    // Skip sensitive files
+    if (
+      !stat.isDirectory() &&
+      isSensitiveFile(entry)
+    ) {
+      continue;
+    }
+
+    // Skip very large files
+    if (
+      !stat.isDirectory() &&
+      stat.size > 500000
+    ) {
+      continue;
+    }
+
     if (stat.isDirectory()) {
-      getAllFiles(fullPath, files);
+      getAllFiles(
+        fullPath,
+        {
+          ignoredDirs,
+          ignoredFiles,
+        },
+        files
+      );
     } else {
       const ext = path.extname(entry);
 
-      if (
-        allowedExtensions.includes(ext) ||
-        entry === ".env"
-      ) {
+      if (allowedExtensions.includes(ext)) {
         files.push(fullPath);
       }
     }
